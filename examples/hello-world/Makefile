@@ -14,6 +14,10 @@ DEVELHELP ?= 1
 
 USEMODULE += rtctimers-millis
 
+USEMODULE += shell_commands
+USEMODULE += shell
+USEMODULE += ps
+
 FEATURES_REQUIRED += periph_rtc
 FEATURES_REQUIRED += periph_gpio
 
