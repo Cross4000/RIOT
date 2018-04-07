@@ -28,6 +28,8 @@
 #include "periph/pm.h"
 
 #include "thread.h"
+#include "xtimer.h"
+#include "opt3001.h"
 
 static kernel_pid_t process_pid;
 static msg_t process_msg;
@@ -38,6 +40,9 @@ static msg_t process_msg;
 #include "debug.h"
 
 uint32_t milliseconds_last_press = 0;
+
+static opt3001_measure_t opt3001_data;
+static opt3001_t opt3001;
 
 static void *process_thread(void *arg)
 	{
@@ -56,6 +61,9 @@ static void *process_thread(void *arg)
 			{
 			DEBUG("LED set to NE Gorit %d\n", gpio_read(GPIO_PIN(PORT_B, 1)));	
 			}
+		opt3001_measure(&opt3001, &opt3001_data);
+       		printf("Luminocity is %lu\n", opt3001_data.luminocity);
+		
 		}
 	return NULL;
 	}
@@ -81,14 +89,20 @@ int main(void)
 	pm_prevent_sleep = 1;
 	
 	rtctimers_millis_init();
+	
+	
+	opt3001.i2c = 1;
+	opt3001_init(&opt3001);
 
 	    puts("Hello World!");
 
 	    printf("You are running RIOT on a(n) %s board.\n", RIOT_BOARD);
 	    printf("This board features a(n) %s MCU.\n", RIOT_MCU);
-
+	    
+	    opt3001_measure(&opt3001, &opt3001_data);
+	    printf ("Luminocity is %lu/n", opt3001_data.luminocity);
+	
 	gpio_init(GPIO_PIN(PORT_B, 0), GPIO_OUT);
-
 	gpio_init_int(GPIO_PIN(PORT_B, 1),GPIO_IN_PU, GPIO_FALLING, btn_led_toggle, NULL);
 
 
