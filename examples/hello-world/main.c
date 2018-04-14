@@ -22,11 +22,11 @@
 #include <stdio.h>
 #include "periph/gpio.h"
 #include "rtctimers-millis.h"
-
+#include "periph/adc.h"
 #include "shell_commands.h"
 #include "shell.h"
 #include "periph/pm.h"
-
+#include "periph/pwm.h"
 #include "thread.h"
 #include "xtimer.h"
 #include "opt3001.h"
@@ -44,6 +44,7 @@ uint32_t milliseconds_last_press = 0;
 static opt3001_measure_t opt3001_data;
 static opt3001_t opt3001;
 
+
 static void *process_thread(void *arg)
 	{
 	(void)arg;
@@ -53,16 +54,23 @@ static void *process_thread(void *arg)
 		{
 		msg_receive(&message);
 		gpio_toggle (GPIO_PIN(PORT_B, 0));
-		if (gpio_read(GPIO_PIN(PORT_B, 0))==1)
+	/*	if (gpio_read(GPIO_PIN(PORT_B, 0))==1)
 			{
-			DEBUG("LED set to Gorit %d\n", gpio_read(GPIO_PIN(PORT_B, 0)));
+			DEBUG("РЕЗУЛЬТАТ %d\n", gpio_read(GPIO_PIN(PORT_B, 0)));
+			printf("Освещенность %lu\n", opt3001_data.luminocity);
 			}
 		else
 			{
-			DEBUG("LED set to NE Gorit %d\n", gpio_read(GPIO_PIN(PORT_B, 1)));	
+			DEBUG("СЧИТЫВАНИЕ %d\n", gpio_read(GPIO_PIN(PORT_B, 1)));	
 			}
-		opt3001_measure(&opt3001, &opt3001_data);
-       		printf("Luminocity is %lu\n", opt3001_data.luminocity);
+	*/	opt3001_measure(&opt3001, &opt3001_data);
+       		//printf("Luminocity is %lu\n", opt3001_data.luminocity);
+       		int sample = adc_sample(3, ADC_RES_12BIT);
+       		int vref = adc_sample(ADC_VREF_INDEX,ADC_RES_12BIT);
+       		
+       		sample = (sample*vref)/4096;
+       		
+       		printf("ADC value: %d mV, Vref: %d mV\n",sample, vref); 
 		
 		}
 	return NULL;
@@ -93,6 +101,14 @@ int main(void)
 	
 	opt3001.i2c = 1;
 	opt3001_init(&opt3001);
+	
+	adc_init(3);
+	adc_init (ADC_VREF_INDEX);
+	
+	pwm_init(PWM_DEV(0), PWM_LEFT, 1000, 1000);
+	pwm_set(0, 0, 50);
+	
+	
 
 	    puts("Hello World!");
 
